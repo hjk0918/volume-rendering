@@ -1,0 +1,19 @@
+python ./scripts/render_heatmap.py \
+--dataset scannet \
+--dataset_dir ./scannet_dataset \
+--feature_dir ./scannet_rpn_data/features_160 \
+--target_dir ./output/scannet_fcos_vggEF/scannet_test_results \
+--output_dir ./output/scannet_fcos_vggEF/scannet_test_results \
+--boxes_dir ./scannet_rpn_data/obb_160 \
+--hmp_type voxel \
+--hmp_top_k 70 \
+--vis_top_n 13 \
+--kernel_type box \
+--value_scale 50 \
+--view_angle 45 \
+--downsample 1 \
+--gaussian_sigma 4 \
+--blend_alpha_beta_gamma 0.6 0.5 0 \
+--line_width 4 \
+--command_path ./scripts/run_render_heatmap_scannet.sh \
+# --single_scene ai_053_020

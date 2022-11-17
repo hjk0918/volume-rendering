@@ -1,0 +1,20 @@
+python ./scripts/render_heatmap.py \
+--dataset_dir ./hypersim_dataset \
+--feature_dir ./hypersim_rpn_data/features_200 \
+--target_dir ./output/hypersim_fcos_vggEF \
+--output_dir ./output/hypersim_fcos_vggEF/hypersim \
+--boxes_dir ./hypersim_rpn_data/obb_200 \
+--single_scene ai_022_005 \
+--hmp_type voxel \
+--transpose_yz \
+--hmp_top_k 70 \
+--vis_top_n 12 \
+--kernel_type box \
+--value_scale 50 \
+--view_angle 45 \
+--downsample 1 \
+--gaussian_sigma 4 \
+--concat_img \
+--blend_alpha_beta_gamma 0.6 0.5 0 \
+--line_width 4 \
+--command_path ./scripts/run_render_heatmap_hypersim.sh

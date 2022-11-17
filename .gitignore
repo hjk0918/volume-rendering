@@ -1,0 +1,12 @@
+*_data
+*_output
+*_dataset
+.vscode
+.ipynb_checkpoints
+FRONT3D_render 
+output
+supmat_resources
+rpn_results
+vis_finalist
+ffmpeg
+.DS_Store
