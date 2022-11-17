@@ -9,4 +9,7 @@ supmat_resources
 rpn_results
 vis_finalist
 ffmpeg
+*rpn_results
+.zip
 .DS_Store
+scripts/__pycache__

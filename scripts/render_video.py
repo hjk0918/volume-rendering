@@ -16,8 +16,7 @@ from argparse import ArgumentParser
 import json
 import copy
 from scipy.ndimage import gaussian_filter
-from bbox_proj import project_obb_to_image
-import shutil
+from bbox_proj import project_obb_to_image, project_obb_to_image_v2
 from copy import deepcopy
 import subprocess
 import glob
@@ -385,8 +384,11 @@ def render_volume(heatmap, room_bbox, res, output_dir, args, json_dict=None, box
                 alpha, beta, gamma = args.blend_alpha_beta_gamma
                 blended = cv2.addWeighted(input, alpha, hmp, beta, gamma)
                 output = copy.deepcopy(input)
-                output = project_obb_to_image(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
+                # output = project_obb_to_image(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
+                output = project_obb_to_image_v2(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
 
+                
+                
                 os.makedirs(join(output_dir, 'split'), exist_ok=True)
                 cv2.imwrite(join(output_dir, 'split', scene_name+'_'+name+'_input.png'), input)
                 cv2.imwrite(join(output_dir, 'split', scene_name+'_'+name+'_hmp.png'), hmp)
@@ -481,7 +483,8 @@ def render_video(imgs, heatmap, room_bbox, res, output_dir, args, val_json_dict,
                 alpha, beta, gamma = args.blend_alpha_beta_gamma
                 blended = cv2.addWeighted(input, alpha, hmp, beta, gamma)
                 output = copy.deepcopy(input)
-                output = project_obb_to_image(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
+                # output = project_obb_to_image(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
+                output = project_obb_to_image_v2(output, intrinsic_mat, np.linalg.inv(pose), boxes_8, line_width=args.line_width)
 
                 os.makedirs(join(output_dir, 'split'), exist_ok=True)
                 cv2.imwrite(join(output_dir, 'split', scene_name+'_'+name+'_hmp.png'), hmp)

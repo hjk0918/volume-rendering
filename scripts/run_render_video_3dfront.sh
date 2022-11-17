@@ -1,7 +1,7 @@
 python ./scripts/render_video.py \
---dataset_dir ./FRONT3D_render/test_scenes \
+--dataset_dir ./3dfront_dataset \
 --feature_dir ./3dfront_rpn_data/features_160 \
---target_dir ./output/3dfront_fcos_density_only \
+--target_dir ./3dfront_rpn_results \
 --output_dir ./video_output \
 --single_scene 3dfront_0089_00 \
 --hmp_type voxel \
