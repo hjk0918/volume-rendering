@@ -1,6 +1,7 @@
 *_data
 *_output
 *_dataset
+*_rpn_results
 .vscode
 .ipynb_checkpoints
 FRONT3D_render 
@@ -10,3 +11,5 @@ rpn_results
 vis_finalist
 ffmpeg
 .DS_Store
+*.pptx
+*.png

@@ -1,15 +1,15 @@
 python ./scripts/render_video.py \
---dataset_type inria \
---feature_dir ./inria_rpn_data/features \
---target_dir ./inria_rpn_results \
+--dataset_type hypersim \
+--feature_dir ./hypersim_rpn_data/features_200 \
+--target_dir ./output/hypersim_fcos_vggEF \
 --output_dir ./video_output \
---single_scene asianRoom2 \
+--single_scene ai_022_005 \
 --hmp_type voxel \
 --transpose_yz \
 --hmp_top_k 70 \
---vis_top_n 10 \
+--vis_top_n 12 \
 --kernel_type box \
---value_scale 60 \
+--value_scale 45 \
 --view_angle 50 \
 --downsample 1 \
 --gaussian_sigma 4 \

@@ -30,6 +30,7 @@ def project(intrinsic_mat,  # [3x3]
     #-- Handle points behind camera: negate x,y if z<0
     indices = box_coords_cam[2, :] < 0
     box_coords_cam[:2, indices] *= -1
+    # box_coords_cam[:2, :] *= -1
     
     #-- From camera space to picture space. 
     box_coords_pic = intrinsic_mat @ box_coords_cam[:3, :]  # [3x8]
@@ -43,7 +44,7 @@ def project(intrinsic_mat,  # [3x3]
 
     #-- Report whether the whole object is in front of camera.
     in_front = True
-    if np.sum(box_coords_cam[2,:]<0) < 4: # not in_front: less than 6 coords are in front of the camera
+    if np.sum(box_coords_cam[2,:]<0) < 8: # not in_front: less than 6 coords are in front of the camera
         in_front = False 
 
     fl_x, fl_y, cx, cy = intrinsic_mat[0,0], intrinsic_mat[1,1], intrinsic_mat[0,2], intrinsic_mat[1,2]

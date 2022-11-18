@@ -21,6 +21,7 @@ import shutil
 from copy import deepcopy
 import subprocess
 import glob
+from tqdm import tqdm
 
 def gkern_3d(w=10, l=10, h=3, sig=1.):
     """\
@@ -121,7 +122,7 @@ def ngp_aabb_to_nerf(ngp_aabb, scale, offset, from_mitsuba):
     result = (result - offset) / scale
     return result
 
-def load_alpha_and_proposals(feature_path: str, proposal_path: str, json_path: str, args):
+def load_alpha_and_proposals(feature_path: str, proposal_path: str, args):
     """ Load alpha and proposals from the given paths. 
     Args:
         feature_path (str): path to the alpha feature
@@ -144,12 +145,13 @@ def load_alpha_and_proposals(feature_path: str, proposal_path: str, json_path: s
     bbox_min = feature_npz['bbox_min']
     bbox_max = feature_npz['bbox_max']
 
-    with open(json_path, 'r') as f:
-        json_dict = json.load(f)
-        if 'room_bbox' in json_dict:
-            room_bbox = np.array(json_dict['room_bbox']).flatten()
-        else:
-            room_bbox = ngp_aabb_to_nerf(np.array([bbox_min, bbox_max]), scale, offset, from_mitsuba).flatten()
+    room_bbox = ngp_aabb_to_nerf(np.array([bbox_min, bbox_max]), scale, offset, from_mitsuba).flatten()
+    # with open(json_path, 'r') as f:
+    #     json_dict = json.load(f)
+    #     if 'room_bbox' in json_dict:
+    #         room_bbox = np.array(json_dict['room_bbox']).flatten()
+    #     else:
+    #         room_bbox = ngp_aabb_to_nerf(np.array([bbox_min, bbox_max]), scale, offset, from_mitsuba).flatten()
     if args.dataset == 'scannet':
         room_bbox = room_bbox[[1, 2, 0, 4, 5, 3]]
     
@@ -398,7 +400,7 @@ def render_volume(heatmap, room_bbox, res, output_dir, args, json_dict=None, box
                 concat = np.concatenate([concat1, concat2], axis=0)
                 cv2.imwrite(join(output_dir, scene_name+'_'+name+'_hmp.png'), concat)
 
-def render_video(imgs, heatmap, room_bbox, res, output_dir, args, val_json_dict, traj_json_dict, boxes_8=None, frame_list=None):
+def render_video(imgs, heatmap, room_bbox, res, output_dir, args, traj_json_dict, boxes_8=None, frame_list=None):
     heatmap = heatmap[0::args.downsample, 0::args.downsample, 0::args.downsample]
     heatmap *= args.value_scale 
     # print('mean={}, std={}, min={}, max={}'.format(np.mean(heatmap), np.std(heatmap), np.min(heatmap), np.max(heatmap)))
@@ -488,15 +490,14 @@ def render_video(imgs, heatmap, room_bbox, res, output_dir, args, val_json_dict,
                 cv2.imwrite(join(output_dir, 'split', scene_name+'_'+name+'_blend.png'), blended)
                 cv2.imwrite(join(output_dir, 'split', scene_name+'_'+name+'_output.png'), output)
 
-                # if (idx+1) % 30 == 0:
-                #     break
-
                 # if True:
                 if idx % 50 == 0:
                     concat1 = np.concatenate([input, hmp], axis=1)
                     concat2 = np.concatenate([blended, output], axis=1)
                     concat = np.concatenate([concat1, concat2], axis=0)
                     cv2.imwrite(join(output_dir, scene_name+'_'+name+'_hmp.png'), concat)
+            
+            # break
             
         
         kwlist = ['hmp', 'blend', 'output']
@@ -509,32 +510,49 @@ def render_video(imgs, heatmap, room_bbox, res, output_dir, args, val_json_dict,
                 writer.append_data(imageio.v2.imread(im))
             writer.close()
 
-def merge_videos(video1_path, video2_path, img_path):
-    bev_img = cv2.imread(img_path)
+def merge_videos(video1_path, video2_path, img_path, output_dir, text1, text2, text3):
     vid1 = imageio.get_reader(video1_path,  'ffmpeg')
     vid2 = imageio.get_reader(video2_path,  'ffmpeg')
     vid1_num_frames = vid1.count_frames()
     vid2_num_frames = vid2.count_frames()
     assert vid1_num_frames == vid2_num_frames, "The number of frames in two videos should be the same."
+
+    bev_img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2RGB)
+    h, w, _ = vid1.get_data(0).shape
+    re_h = int(h * 2)
+    re_w = int(re_h * 4 / 3)
+    bev_w = re_w - w
+    bev_h = int(bev_w * bev_img.shape[0] / bev_img.shape[1])
+    bev_img_resize = cv2.resize(bev_img, (bev_w, bev_h), interpolation = cv2.INTER_AREA)
+
     vid_imgs = []
-    for num in range(vid2_num_frames):
-        img1 = cv2.cvtColor(vid1.get_data(num), cv2.COLOR_RGB2BGR)
-        img2 = cv2.cvtColor(vid2.get_data(num), cv2.COLOR_RGB2BGR)
-        print(img1.dtype)
-        print(img2.dtype)
-        print(bev_img.dtype)
+    for num in tqdm(range(vid2_num_frames)):
+        img1 = vid1.get_data(num)
+        img2 = vid2.get_data(num)
 
         h, w, _ = img1.shape
-        re_h = h * 2
-        re_w = re_h * 4 / 3
+        re_h = int(h * 2)
 
         img = np.zeros((re_h, re_w, 3), dtype=np.uint8)
         img[0:h, -w:, :] = img1
         img[h:, -w:, :] = img2
-        
 
+        img[int((re_h-bev_h)/2):int((re_h-bev_h)/2)+bev_h, 0:bev_w, :] = bev_img_resize
+        img = cv2.putText(img, text1, org=(50, 100), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                   fontScale=2, color=(255,255,255), thickness=4, lineType=cv2.LINE_AA)
+        img = cv2.putText(img, text2, org=(50, 200), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                   fontScale=2, color=(255,255,255), thickness=4, lineType=cv2.LINE_AA)
+        img = cv2.putText(img, text3, org=(50, 300), fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                   fontScale=2, color=(255,255,255), thickness=4, lineType=cv2.LINE_AA)
 
-        imgs.append(img)
+        vid_imgs.append(img)
+        # break
+    
+    kargs = {'macro_block_size': None}
+    writer = imageio.get_writer(join(output_dir, f'final_video.mp4'), fps=30, **kargs)
+    for im in tqdm(vid_imgs):
+        writer.append_data(im)
+    writer.close()
 
 
 def select_and_blend():
@@ -542,7 +560,7 @@ def select_and_blend():
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('--dataset_dir', type=str, help='path to dataset directory')
+    parser.add_argument('--dataset_type', type=str, choices=['hypersim', '3dfront', 'inria'], help='path to dataset directory')
     parser.add_argument('--feature_dir', type=str, help='path to feature directory')
     parser.add_argument('--target_dir', type=str, help='path to target directory')
     parser.add_argument('--output_dir', type=str, help='path to output directory')
@@ -579,15 +597,6 @@ if __name__ == '__main__':
     scene_list = [x.split('.')[0] for x in sorted(os.listdir(args.voxel_dir))]
     if args.single_scene != '':
         scene_list = [args.single_scene]
-    # debug
-    # scene_list = ['ai_016_010']
-    # scene_list = ['scene0487_00']
-    # scene_list = ['scene0002_00', 'scene0166_00', 'scene0220_00', 'scene0416_00', 'scene0487_00']
-    # scene_list = scene_list[:1]
-    # scene_list = ['025', '054', '078', '225', '276', '522']
-    # scene_list = ['054']
-    # scene_list = ['3dfront_0037_00']
-    # scene_list = ['3dfront_0091_00', '3dfront_0072_00', '3dfront_0037_00']
 
     for scene_name in scene_list:
         if scene_name == 'scene0040_00':
@@ -595,10 +604,6 @@ if __name__ == '__main__':
         args.scene_name = scene_name # pass scene_name to with args
         feature_path = join(args.feature_dir, scene_name+'.npz')
         proposal_path = join(args.proposal_dir, scene_name+'.npz')
-        if args.dataset == 'scannet':
-            val_json_path = join(args.dataset_dir, scene_name, 'transforms_test.json')
-        else:
-            val_json_path = join(args.dataset_dir, scene_name, 'val', 'val_transforms.json')
         assert os.path.isfile(feature_path), 'feature file not found: {}'.format(feature_path)
         # assert os.path.isfile(proposal_path), 'proposal file not found: {}'.format(proposal_path)
         scene_output_dir = join(args.output_dir, scene_name)
@@ -606,7 +611,7 @@ if __name__ == '__main__':
         #     shutil.rmtree(scene_output_dir)
         os.makedirs(scene_output_dir, exist_ok=True)
 
-        alpha, proposals, room_bbox, res = load_alpha_and_proposals(feature_path, proposal_path, val_json_path, args)
+        alpha, proposals, room_bbox, res = load_alpha_and_proposals(feature_path, proposal_path, args)
         aabbs = obb2hbb(proposals[:args.hmp_top_k]).astype(int)
         boxes_point8 = grid2world(obb2point8(proposals[:args.vis_top_n]), room_bbox, res)
         # boxes_point8 = grid2world(obb2point8(proposals[2:4]), room_bbox, res)
@@ -635,15 +640,23 @@ if __name__ == '__main__':
         print(room_bbox)
         # exit()
 
-        # render poses in val_json_paths
-        with open(val_json_path, 'r') as f:
-            val_json_dict = json.load(f)
         
-        # render_video(imgs, heatmap, room_bbox, res, scene_output_dir, args, val_json_dict, traj_json_dict, boxes_point8)
-        
+        render_video(imgs, heatmap, room_bbox, res, scene_output_dir, args, traj_json_dict, boxes_point8)
+    
+        if args.dataset_type == 'inria':
+            text1 = "Inria NeRF Dataset"
+            text3 = 'Type: Real-world data'
+        elif args.dataset_type == '3dfront':
+            text1 = "3D-FRONT NeRF Dataset"
+            text3 = 'Type: Synthetic data'
+        elif args.dataset_type == 'hypersim':
+            text1 = "Hypersim NeRF Dataset"
+            text3 = 'Type: Synthetic data'
+        text2 = "Scene: {}".format(scene_name)
         merge_videos(join(scene_output_dir, 'video_output.mp4'), 
                     join(scene_output_dir, 'video_blend.mp4'), 
-                    join('./supmat_resources', scene_name, 'bev.png'))
+                    join('./supmat_resources', scene_name, 'bev.png'),
+                    scene_output_dir, text1, text2, text3)
 
 
         subprocess.run(['cp', args.command_path, join(args.output_dir, scene_name)])
