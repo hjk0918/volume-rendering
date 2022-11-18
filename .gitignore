@@ -13,3 +13,7 @@ ffmpeg
 .DS_Store
 *.pptx
 *.png
+*rpn_results
+.zip
+.DS_Store
+scripts/__pycache__

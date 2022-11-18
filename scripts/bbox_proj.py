@@ -92,6 +92,72 @@ def draw_bbox(img, pic_coords, color, label, width=4):
         font = ImageFont.truetype(r'/usr/share/fonts/truetype/freefont/FreeMono.ttf', 20)
         draw.text(pic_coords[0], label, color, font)
 
+
+def project_v2(intrinsic_mat,  # [3x3]
+            pose_mat,  # [4x4], world coord -> camera coord
+            box_coords  # [8x4] (x,y,z,1)
+            ):
+    #-- From world space to camera space.  
+    box_coords_cam = pose_mat @ box_coords.T  # [4x8]
+    box_coords[:3, :] /= box_coords[3, :]  # [8x4]
+    
+    #-- Handle points behind camera: negate x,y if z<0
+    indices = box_coords_cam[2, :] < 0
+    box_coords_cam[:2, :] *= -1
+    
+
+    
+    return box_coords_cam
+
+def draw_line(img, v1, v2, color, width, intrinsic_mat, clipping_plane_z):
+    
+    if -v1[2] > clipping_plane_z  and -v2[2] > clipping_plane_z:
+        box_coords_cam = np.concatenate([v1, v2], dim = 0)
+
+    elif -v1[2] < clipping_plane_z  and -v2[2] < clipping_plane_z:
+        return
+    else:
+        back_v = v2 if -v2[2] < clipping_plane_z else v1
+        front_v  = v2 if -v2[2] > clipping_plane_z else v1
+        
+        # line fucntion : r*t + b. We solve it when r_z*t + b_z = clipping_plane_z
+        # Here r = front_v - back_v, b = back_v
+        r = front_v - back_v
+        b = back_v
+        t = (clipping_plane_z - b[2]) / r[2]
+        x,y = r[0] * t +  b[0], r[1] * t +  b[1]
+        intersect_v = np.array([x,y,clipping_plane_z,1.])
+        box_coords_cam = np.concatenate([front_v, intersect_v], dim = 0)
+    
+    box_coords_pic = intrinsic_mat @ box_coords_cam[:3, :]  # [3x2]
+    # box_coords_pic = np.matmul(intrinsic_mat, box_coords_cam[:3, :])  # [3x2]
+    box_coords_pic[:2, :] /= box_coords_pic[2, :]
+    final_coords = np.array(np.transpose(box_coords_pic[:2, :], [1, 0]).astype(np.int16))
+    final_coords[:, 1] = intrinsic_mat[1,2]*2 - final_coords[:, 1]
+    
+    cv2.line(img, final_coords[0], final_coords[1], color, width)
+    
+
+def draw_bbox_v2(img, pic_coords, color, label, intrinsic_mat, width=4, clipping_plane_z = 0.1):
+    """Draw bounding boxes and labels on the image. """
+    if isinstance(img, np.ndarray):
+        draw_line(img, pic_coords[0], pic_coords[1], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[1], pic_coords[2], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[2], pic_coords[3], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[3], pic_coords[0], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[0], pic_coords[4], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[1], pic_coords[5], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[2], pic_coords[6], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[3], pic_coords[7], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[4], pic_coords[5], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[5], pic_coords[6], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[6], pic_coords[7], color, width, intrinsic_mat, clipping_plane_z)
+        draw_line(img, pic_coords[7], pic_coords[4], color, width, intrinsic_mat, clipping_plane_z)
+        cv2.putText(img, label, (pic_coords[0][0], pic_coords[0][1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+    else:
+        print("GG.")
+
+
 def project_aabb_to_image(img, # PIL image or numpy array
                           intrinsic_mat,  # [3x3]
                           pose,  # [4x4], world coord -> camera coord
@@ -128,4 +194,26 @@ def project_obb_to_image(img, # PIL image or numpy array
         # exit()
         if in_front:
             draw_bbox(img_with_bbox, pic_coords, color, label, line_width)
+    return img_with_bbox
+
+
+
+def project_obb_to_image_v2(img, # PIL image or numpy array
+                          intrinsic_mat,  # [3x3]
+                          pose,  # [4x4], world coord -> camera coord
+                          obboxes,  # [Nx8x3]
+                          labels=None, # [n x str]
+                          colors=None, # a list of n tuples
+                          line_width=4
+                          ):
+    """Project a list of bounding boxes to an image. Return the image with bounding boxes drawn. """
+    img_with_bbox = img.copy()
+    for i in range(len(obboxes)):
+        obbox = obboxes[i]
+        obbox = np.concatenate([obbox, np.ones([obbox.shape[0], 1])], axis=1) if obbox.shape[1] == 3 else obbox
+        label = labels[i] if labels!=None and i<len(labels) else ""
+        color = colors[i] if colors!=None and i<len(colors) else (0,0,255)
+        world_coords = project_v2(intrinsic_mat, pose, obbox)
+
+        draw_bbox_v2(img_with_bbox, world_coords, color, label, intrinsic_mat, line_width = line_width,)
     return img_with_bbox
