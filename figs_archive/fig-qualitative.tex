@@ -1,0 +1,55 @@
+\newcommand\width{0.02cm}
+\newcommand\height{0.06cm}
+\newcommand{\nerfinput}{Input NeRF}
+\newcommand{\heatmap}{Heat Map}
+\newcommand{\proposals}{Proposals}
+
+%\newcommand{\img1}[]{}
+
+\begin{figure*}[ht]
+    \centering
+    \captionsetup[subfloat]{labelformat=empty}
+
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0037_00_raw_2_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0037_00_raw_2_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0037_00_raw_2_output.png}}
+	\hfill
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_001_008_frame.0029.tonemap_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_001_008_frame.0029.tonemap_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_001_008_frame.0029.tonemap_output.png}}
+	
+	\vspace{\height}
+
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0019_00_raw_2_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0019_00_raw_2_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0019_00_raw_2_output.png}}
+	\hfill
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scenenn/025_025-image02910_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scenenn/025_025-image02910_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scenenn/025_025-image02910_output.png}}
+	
+	\vspace{\height}
+
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0089_00_raw_2_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0089_00_raw_2_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/3dfront/3dfront_0089_00_raw_2_output.png}}
+	\hfill
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0220_00_719_input.png}}\hspace{\width}
+	\subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0220_00_719_blend.png}}\hspace{\width}
+    \subfloat{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0220_00_719_output.png}}
+	
+	\vspace{\height}
+ 
+	\subfloat[\nerfinput]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_053_020_frame.0000.tonemap_input.png}}\hspace{\width}
+	\subfloat[\heatmap]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_053_020_frame.0000.tonemap_blend.png}}\hspace{\width}
+    \subfloat[\proposals]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/hypersim/ai_053_020_frame.0000.tonemap_output.png}}
+	\hfill
+    \subfloat[\nerfinput]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0487_00_914_input.png}}\hspace{\width}
+	\subfloat[\heatmap]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0487_00_914_blend.png}}\hspace{\width}
+    \subfloat[\proposals]{\includegraphics[width = 0.16\linewidth]{figs/qualitative_results/scannet/scene0487_00_914_output.png}}
+	
+	\vspace{-0.1in}
+    \caption{\textbf{Qualitative Results.} The ``Heat Map" columns show the distribution of proposal confidence scores where red means higher confidence. The ``Proposals" columns show a few top bounding boxes after NMS. }
+    \vspace{-0.2in}
+    \label{fig:qualitative}
+\end{figure*}

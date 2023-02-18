@@ -3,7 +3,7 @@ python ./scripts/render_video.py \
 --feature_dir ./hypersim_rpn_data/features_200 \
 --target_dir ./output/hypersim_fcos_vggEF \
 --output_dir ./video_output \
---single_scene ai_022_005 \
+--single_scene ai_053_020 \
 --hmp_type voxel \
 --transpose_yz \
 --hmp_top_k 70 \

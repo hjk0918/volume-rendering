@@ -21,6 +21,7 @@ from copy import deepcopy
 import subprocess
 import glob
 from tqdm import tqdm
+import shutil
 
 def gkern_3d(w=10, l=10, h=3, sig=1.):
     """\
@@ -456,15 +457,12 @@ def render_video(imgs, heatmap, room_bbox, res, output_dir, args, traj_json_dict
             fl_x = cx / np.tan(angle_x / 2)
             fl_y = fl_x
         intrinsic_mat = np.array([[fl_x, 0, cx], [0, fl_y, cy], [0, 0, 1]])
-
-        # intrinsic_mat = np.array([[1150, 0, 960], [0, 1150, 540], [0, 0, 1]])
         
         for idx, (name, cam_position, focal_point, pose, input) in enumerate(zip(names, cam_positions, focal_points, poses, imgs)):
-            # if idx not in [15, 102, 103, 104, 112, 119, 120, 121, 167, 168, 171, 172, 173, 187, 
-            #                 222, 230, 249, 254, 293, 297, 298, 299, 300]:
+            # if idx % 20 != 0:
             #     continue
 
-            # if idx not in [168]:
+            # if idx not in [145, 149, 150]:
             #     continue
             
             p.camera.position = cam_position
@@ -503,7 +501,7 @@ def render_video(imgs, heatmap, room_bbox, res, output_dir, args, traj_json_dict
             # break
             
         
-        kwlist = ['hmp', 'blend', 'output']
+        kwlist = ['output']
         for kw in kwlist:
             img_path_list = sorted(glob.glob(join(output_dir, 'split', f'*_{kw}.png')))
             print(join(output_dir, scene_name, f'video_{kw}.mp4'))
@@ -557,10 +555,6 @@ def merge_videos(video1_path, video2_path, img_path, output_dir, text1, text2, t
         writer.append_data(im)
     writer.close()
 
-
-def select_and_blend():
-    pass
-
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--dataset_type', type=str, choices=['hypersim', '3dfront', 'inria'], help='path to dataset directory')
@@ -600,6 +594,9 @@ if __name__ == '__main__':
     scene_list = [x.split('.')[0] for x in sorted(os.listdir(args.voxel_dir))]
     if args.single_scene != '':
         scene_list = [args.single_scene]
+    
+    # scene_list = ['3dfront_0089_00', '3dfront_0019_00']
+    # scene_list = ['asianRoom1', 'asianRoom2', 'Salon2']
 
     for scene_name in scene_list:
         if scene_name == 'scene0040_00':
@@ -610,14 +607,14 @@ if __name__ == '__main__':
         assert os.path.isfile(feature_path), 'feature file not found: {}'.format(feature_path)
         # assert os.path.isfile(proposal_path), 'proposal file not found: {}'.format(proposal_path)
         scene_output_dir = join(args.output_dir, scene_name)
-        # if os.path.isdir(scene_output_dir):
-        #     shutil.rmtree(scene_output_dir)
+        if os.path.isdir(scene_output_dir):
+            shutil.rmtree(scene_output_dir)
         os.makedirs(scene_output_dir, exist_ok=True)
 
         alpha, proposals, room_bbox, res = load_alpha_and_proposals(feature_path, proposal_path, args)
         aabbs = obb2hbb(proposals[:args.hmp_top_k]).astype(int)
         boxes_point8 = grid2world(obb2point8(proposals[:args.vis_top_n]), room_bbox, res)
-        # boxes_point8 = grid2world(obb2point8(proposals[2:4]), room_bbox, res)
+        # boxes_point8 = grid2world(obb2point8(proposals[1:2:1]), room_bbox, res)
         
         os.environ['IMAGEIO_FFMPEG_EXE'] = '/Users/abraham/Desktop/fyp/RPN_NeRF_temp/ffmpeg'
         import imageio
@@ -648,25 +645,21 @@ if __name__ == '__main__':
     
         if args.dataset_type == 'inria':
             text1 = "Inria NeRF Dataset"
-            text3 = 'Type: Real-world data'
+            text3 = 'Type: Real-world'
         elif args.dataset_type == '3dfront':
             text1 = "3D-FRONT NeRF Dataset"
-            text3 = 'Type: Synthetic data'
+            text3 = 'Type: Synthetic'
         elif args.dataset_type == 'hypersim':
             text1 = "Hypersim NeRF Dataset"
-            text3 = 'Type: Synthetic data'
+            text3 = 'Type: Synthetic'
         text2 = "Scene: {}".format(scene_name)
-        merge_videos(join(scene_output_dir, 'video_output.mp4'), 
-                    join(scene_output_dir, 'video_blend.mp4'), 
-                    join('./supmat_resources', scene_name, 'bev.png'),
-                    scene_output_dir, text1, text2, text3)
+        # merge_videos(join(scene_output_dir, 'video_output.mp4'), 
+        #             join(scene_output_dir, 'video_blend.mp4'), 
+        #             join('./supmat_resources', scene_name, 'bev.png'),
+        #             scene_output_dir, text1, text2, text3)
 
 
-        subprocess.run(['cp', args.command_path, join(args.output_dir, scene_name)])
+        # subprocess.run(['cp', args.command_path, join(args.output_dir, scene_name)])
 
-    select_and_blend()
-
-
-        
 
     print('Done.')

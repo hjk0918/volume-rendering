@@ -3,11 +3,11 @@ python ./scripts/render_video.py \
 --feature_dir ./inria_rpn_data/features \
 --target_dir ./inria_rpn_results \
 --output_dir ./video_output \
---single_scene asianRoom2 \
+--single_scene asianRoom1 \
 --hmp_type voxel \
 --transpose_yz \
 --hmp_top_k 70 \
---vis_top_n 10 \
+--vis_top_n 16 \
 --kernel_type box \
 --value_scale 60 \
 --view_angle 50 \
